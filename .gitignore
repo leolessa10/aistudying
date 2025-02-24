@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+*.log
+
+# Node.js
+node_modules/
+dist/
+
+# Modelos treinados ou arquivos grandes
+modelos/
+*.mp4
+*.mp3
