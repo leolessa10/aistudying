@@ -79,7 +79,6 @@ function App() {
           <h3>Vídeo Gerado:</h3>
           <video width="80%" controls>
 	      <source src={`${API_BASE_URL}${videoUrl}`} type="video/mp4" />
-	      #<source src={`http://aistudying.leo.com:5000${videoUrl}`} type="video/mp4" />
             Seu navegador não suporta vídeos.
           </video>
         </div>

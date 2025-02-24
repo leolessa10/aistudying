@@ -27,7 +27,7 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 # Configuração do Flask
 app.config["VIDEO_FOLDER"] = VIDEO_FINAL_DIR
 
-# Permite requisições de 'http://aistudying.leo.com:3000'
+# Permite requisições de Servidor na porta 3000
 CORS(app, resources={r"/gerar_video": {"origins": f"http://{os.getenv('SERVER_HOST')}:3000"}})
 
 # Caminho do modelo Mistral no llama.cpp
