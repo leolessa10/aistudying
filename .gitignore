@@ -6,6 +6,10 @@ __pycache__/
 .env
 venv/
 *.log
+appbloom560.py
+appllamamis7b.py
+appmis7bv01.py
+bkpv2.py
 
 # Node.js
 node_modules/
