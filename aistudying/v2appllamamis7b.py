@@ -28,7 +28,7 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 app.config["VIDEO_FOLDER"] = VIDEO_FINAL_DIR
 
 # Permite requisições de 'http://aistudying.leo.com:3000'
-CORS(app, resources={r"/gerar_video": {"origins": "http://aistudying.leo.com:3000"}})
+CORS(app, resources={r"/gerar_video": {"origins": f"http://{os.getenv('SERVER_HOST')}:3000"}})
 
 # Caminho do modelo Mistral no llama.cpp
 LLAMA_CLI_PATH = os.getenv("LLAMA_CLI_PATH")
@@ -84,6 +84,8 @@ def gerar_video():
         return jsonify({"video_url": f"/videos/{video_filename}"})
     
     except Exception as e:
+
+        print(f"Erro ao gerar vídeo: {str(e)}")  # Loga o erro no terminal
         return jsonify({"error": str(e)}), 500
 
         #eturn jsonify({"video_url": video_path})
@@ -124,17 +126,51 @@ def gerar_texto(prompt):
     except subprocess.CalledProcessError as e:
         return f"Erro ao executar o modelo: {e}"
 
+#def gerar_audio(roteiro, arquivo_saida):
+#    if os.path.exists(arquivo_saida):
+#        os.remove(arquivo_saida)  # Remove qualquer áudio antigo antes de gerar um novo
+#    tts = gTTS(roteiro, lang='pt-br')
+#    tts.save(arquivo_saida)
+
+
 def gerar_audio(roteiro, arquivo_saida):
+    print(f"Gerando áudio em: {arquivo_saida}")  # Debug
+    
+    # Garantir que o diretório existe
+    diretorio = os.path.dirname(arquivo_saida)
+    os.makedirs(diretorio, exist_ok=True)
+
+    # Se o arquivo já existir, removê-lo
     if os.path.exists(arquivo_saida):
-        os.remove(arquivo_saida)  # Remove qualquer áudio antigo antes de gerar um novo
+        os.remove(arquivo_saida)
+
+    # Gerar áudio
     tts = gTTS(roteiro, lang='pt-br')
     tts.save(arquivo_saida)
 
+    # Verificar se o arquivo foi criado
+    if not os.path.exists(arquivo_saida):
+        raise Exception(f"Erro: {arquivo_saida} não foi criado!")
+
+
+#def buscar_imagens_unsplash(query, quantidade=3):
+#    """
+#    Busca imagens no Unsplash com base em uma consulta (query).
+#    Retorna uma lista de URLs das imagens.
+#    """
+#    url = f"https://api.unsplash.com/search/photos?query={query}&per_page={quantidade}"
+#    headers = {"Authorization": f"Client-ID {UNSPLASH_ACCESS_KEY}"}
+#    response = requests.get(url, headers=headers)
+#    
+#    if response.status_code == 200:
+#        dados = response.json()
+#        print(f"Dados retornados pela API: {dados}")  # Log dos dados
+#        urls_imagens = [imagem["urls"]["regular"] for imagem in dados["results"]]
+#        return urls_imagens
+#    else:
+#        raise Exception(f"Erro ao buscar imagens: {response.status_code}")
+
 def buscar_imagens_unsplash(query, quantidade=3):
-    """
-    Busca imagens no Unsplash com base em uma consulta (query).
-    Retorna uma lista de URLs das imagens.
-    """
     url = f"https://api.unsplash.com/search/photos?query={query}&per_page={quantidade}"
     headers = {"Authorization": f"Client-ID {UNSPLASH_ACCESS_KEY}"}
     response = requests.get(url, headers=headers)
@@ -142,10 +178,17 @@ def buscar_imagens_unsplash(query, quantidade=3):
     if response.status_code == 200:
         dados = response.json()
         print(f"Dados retornados pela API: {dados}")  # Log dos dados
+        
+        if not dados["results"]:  # Verifica se a lista está vazia
+            print("Nenhuma imagem encontrada para a busca no Unsplash.")
+            return []  # Retorna lista vazia
+        
         urls_imagens = [imagem["urls"]["regular"] for imagem in dados["results"]]
         return urls_imagens
     else:
         raise Exception(f"Erro ao buscar imagens: {response.status_code}")
+
+
 
 def baixar_imagens(urls, pasta="imagens_temporarias"):
     """
@@ -196,6 +239,10 @@ def criar_video(audio_path, video_path, resumo):
         #video_path_final = os.path.join(VIDEO_FINAL_DIR, "video_final.mp4")
         video_path_final = video_path  # Usa o nome dinâmico recebido
         video.write_videofile(video_path_final, fps=24, codec='libx264', audio_codec='aac', threads=4, preset='slow')
+        # fechamento explicito
+        video.close()
+        audio.close()
+
     finally:
         # Exclui as imagens temporárias após o uso
         for img in caminhos_imagens:
@@ -205,4 +252,8 @@ def criar_video(audio_path, video_path, resumo):
             shutil.rmtree(TEMP_DIR)  # Remove o diretório temporário e seu conteúdo
 
 if __name__ == '__main__':
-    app.run(host="aistudying.leo.com", port=5000, debug=True)
+    app.run(
+        host=os.getenv("SERVER_HOST"),  # Host do servidor
+        port=5000,  # Porta fixa (ou você pode adicionar ao .env se quiser)
+        debug=True
+        )
