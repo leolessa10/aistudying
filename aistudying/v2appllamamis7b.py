@@ -37,11 +37,6 @@ MODEL_PATH = os.getenv("MODEL_PATH")
 # Chave de API do Unsplash
 UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 
-#@app.route("/video_final.mp4")
-#def get_video():
-#    return send_from_directory(app.config["VIDEO_FOLDER"], "video_final.mp4")
-
-
 @app.route("/videos/<path:filename>")
 def get_video(filename):
     return send_from_directory(VIDEO_FINAL_DIR, filename)
@@ -49,20 +44,15 @@ def get_video(filename):
 @app.route('/gerar_video', methods=['POST'])
 def gerar_video():
     try:
-        data = request.json
-        if not data or 'resumo' not in data or 'idade' not in data:
+        data = request.get_json()
+        if not all(k in data for k in ['resumo', 'idade']):
             return jsonify({"error": "Os campos 'resumo' e 'idade' são obrigatórios."}), 400
-        
         resumo = data['resumo']
         idade = data['idade']
 
         roteiro = gerar_roteiro(resumo, idade)
         audio_path = os.path.join(TEMP_DIR, "audio.mp3")
         gerar_audio(roteiro, audio_path)
-        
-        #video_filename = "video_final.mp4"
-        #video_path = os.path.join(VIDEO_FINAL_DIR, video_filename)
-        #criar_video(audio_path, video_path, resumo)  # Adicionado o resumo como parâmetro
         
         # Gera timestamp para o nome do arquivo
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -79,7 +69,6 @@ def gerar_video():
         criar_video(audio_path, video_path, resumo)  # Adicionado o resumo como parâmetro
 
 
-
         # Retorna um caminho HTTP acessível
         return jsonify({"video_url": f"/videos/{video_filename}"})
     
@@ -88,9 +77,6 @@ def gerar_video():
         print(f"Erro ao gerar vídeo: {str(e)}")  # Loga o erro no terminal
         return jsonify({"error": str(e)}), 500
 
-        #eturn jsonify({"video_url": video_path})
-   #except Exception as e:
-    #   return jsonify({"error": str(e)}), 500
 
 def gerar_roteiro(resumo, idade):
     prompt = (
@@ -126,12 +112,6 @@ def gerar_texto(prompt):
     except subprocess.CalledProcessError as e:
         return f"Erro ao executar o modelo: {e}"
 
-#def gerar_audio(roteiro, arquivo_saida):
-#    if os.path.exists(arquivo_saida):
-#        os.remove(arquivo_saida)  # Remove qualquer áudio antigo antes de gerar um novo
-#    tts = gTTS(roteiro, lang='pt-br')
-#    tts.save(arquivo_saida)
-
 
 def gerar_audio(roteiro, arquivo_saida):
     print(f"Gerando áudio em: {arquivo_saida}")  # Debug
@@ -152,23 +132,6 @@ def gerar_audio(roteiro, arquivo_saida):
     if not os.path.exists(arquivo_saida):
         raise Exception(f"Erro: {arquivo_saida} não foi criado!")
 
-
-#def buscar_imagens_unsplash(query, quantidade=3):
-#    """
-#    Busca imagens no Unsplash com base em uma consulta (query).
-#    Retorna uma lista de URLs das imagens.
-#    """
-#    url = f"https://api.unsplash.com/search/photos?query={query}&per_page={quantidade}"
-#    headers = {"Authorization": f"Client-ID {UNSPLASH_ACCESS_KEY}"}
-#    response = requests.get(url, headers=headers)
-#    
-#    if response.status_code == 200:
-#        dados = response.json()
-#        print(f"Dados retornados pela API: {dados}")  # Log dos dados
-#        urls_imagens = [imagem["urls"]["regular"] for imagem in dados["results"]]
-#        return urls_imagens
-#    else:
-#        raise Exception(f"Erro ao buscar imagens: {response.status_code}")
 
 def buscar_imagens_unsplash(query, quantidade=3):
     url = f"https://api.unsplash.com/search/photos?query={query}&per_page={quantidade}"
@@ -236,7 +199,6 @@ def criar_video(audio_path, video_path, resumo):
         video = video.with_duration(audio.duration)
 
         # Salva o vídeo final no diretório de vídeos
-        #video_path_final = os.path.join(VIDEO_FINAL_DIR, "video_final.mp4")
         video_path_final = video_path  # Usa o nome dinâmico recebido
         video.write_videofile(video_path_final, fps=24, codec='libx264', audio_codec='aac', threads=4, preset='slow')
         # fechamento explicito
@@ -248,8 +210,10 @@ def criar_video(audio_path, video_path, resumo):
         for img in caminhos_imagens:
             if os.path.exists(img):
                 os.remove(img)
-        if os.path.exists(TEMP_DIR):
-            shutil.rmtree(TEMP_DIR)  # Remove o diretório temporário e seu conteúdo
+        for arquivo in os.listdir(TEMP_DIR):
+            caminho = os.path.join(TEMP_DIR, arquivo)
+        if os.path.isfile(caminho):
+            os.remove(caminho)
 
 if __name__ == '__main__':
     app.run(
