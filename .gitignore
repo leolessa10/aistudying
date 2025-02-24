@@ -10,6 +10,11 @@ appbloom560.py
 appllamamis7b.py
 appmis7bv01.py
 bkpv2.py
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 98b23be (Ajuste no .gitignore)
 
 # Node.js
 node_modules/
