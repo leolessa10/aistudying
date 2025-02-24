@@ -33,13 +33,22 @@ npm install axios
 ```
 
 ## Environment Variables
-Create a `.env` file in the project directory and define the following environment variables:
+
+### Backend
+Create a `.env` file in the backend project directory and define the following environment variables:
 ```ini
 UNSPLASH_ACCESS_KEY=
 LLAMA_CLI_PATH=
 MODEL_PATH=
 VIDEO_FINAL_DIR=
 TEMP_DIR=
+SERVER_HOST=
+```
+
+### Frontend
+Create a `.env` file in the `/frontend` directory and define the following environment variable:
+```ini
+REACT_APP_API_BASE_URL=http://IPouNOMEdoSERVER:5000
 ```
 
 ## Running the Backend
