@@ -37,12 +37,23 @@ npm install axios
 ### Backend
 Create a `.env` file in the backend project directory and define the following environment variables:
 ```ini
-UNSPLASH_ACCESS_KEY= #Chave de API do Unsplash. Você precisa criar uma conta no Unsplash Developer.
-LLAMA_CLI_PATH=/aistudying/modelos/llama.cpp/build/bin/llama-cli  #Caminho para o arquivo do modelo Mistral usado pelo llama.cpp.
-MODEL_PATH=/aistudying/modelos/mistral-7b-instruct-v0.1.Q4_K_M.gguf  #Diretório onde os vídeos finais gerados serão armazenados.
-VIDEO_FINAL_DIR= /repos/videofinal # Diret[orio ondeo arquivo finalserá gerado.
-TEMP_DIR= /tmp # Diretório onde os vídeos finais gerados serão armazenados. Deve ser um caminho acessível no sistema
-SERVER_HOST= server.com #Endereço do servidor onde a API do backend estará rodando. Pode ser um IP ou um domínio configurado.
+# Unsplash API key. You need to create an account on Unsplash Developer.
+UNSPLASH_ACCESS_KEY=
+# Path to the Mistral model file used by llama.cpp. Download on https://github.com/ggml-org/llama.cpp
+LLAMA_CLI_PATH=/aistudying/modelos/llama.cpp/build/bin/llama-cli
+
+# Path to the Mistral model file (GGUF format). Download on https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
+MODEL_PATH=/aistudying/modelos/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+
+# Directory where the final generated videos will be stored.
+VIDEO_FINAL_DIR=/repos/videofinal
+
+# Temporary directory to store files during processing. Must be an accessible path on the system.
+TEMP_DIR=/repos//tmp
+
+# Server address where the backend API will be running. Can be an IP or a configured domain.
+SERVER_HOST=server.com
+
 ```
 
 ### Frontend
