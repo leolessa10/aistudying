@@ -27,8 +27,8 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 # Configuração do Flask
 app.config["VIDEO_FOLDER"] = VIDEO_FINAL_DIR
 
-# Permite requisições de 'http://aistudying.leo.com:3000'
-CORS(app, resources={r"/gerar_video": {"origins": "http://aistudying.leo.com:3000"}})
+# Permite requisições de Servidor na porta 3000
+CORS(app, resources={r"/gerar_video": {"origins": f"http://{os.getenv('SERVER_HOST')}:3000"}})
 
 # Caminho do modelo Mistral no llama.cpp
 LLAMA_CLI_PATH = os.getenv("LLAMA_CLI_PATH")
@@ -37,11 +37,6 @@ MODEL_PATH = os.getenv("MODEL_PATH")
 # Chave de API do Unsplash
 UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 
-#@app.route("/video_final.mp4")
-#def get_video():
-#    return send_from_directory(app.config["VIDEO_FOLDER"], "video_final.mp4")
-
-
 @app.route("/videos/<path:filename>")
 def get_video(filename):
     return send_from_directory(VIDEO_FINAL_DIR, filename)
@@ -49,20 +44,15 @@ def get_video(filename):
 @app.route('/gerar_video', methods=['POST'])
 def gerar_video():
     try:
-        data = request.json
-        if not data or 'resumo' not in data or 'idade' not in data:
+        data = request.get_json()
+        if not all(k in data for k in ['resumo', 'idade']):
             return jsonify({"error": "Os campos 'resumo' e 'idade' são obrigatórios."}), 400
-        
         resumo = data['resumo']
         idade = data['idade']
 
         roteiro = gerar_roteiro(resumo, idade)
         audio_path = os.path.join(TEMP_DIR, "audio.mp3")
         gerar_audio(roteiro, audio_path)
-        
-        #video_filename = "video_final.mp4"
-        #video_path = os.path.join(VIDEO_FINAL_DIR, video_filename)
-        #criar_video(audio_path, video_path, resumo)  # Adicionado o resumo como parâmetro
         
         # Gera timestamp para o nome do arquivo
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -79,23 +69,21 @@ def gerar_video():
         criar_video(audio_path, video_path, resumo)  # Adicionado o resumo como parâmetro
 
 
-
         # Retorna um caminho HTTP acessível
         return jsonify({"video_url": f"/videos/{video_filename}"})
     
     except Exception as e:
+
+        print(f"Erro ao gerar vídeo: {str(e)}")  # Loga o erro no terminal
         return jsonify({"error": str(e)}), 500
 
-        #eturn jsonify({"video_url": video_path})
-   #except Exception as e:
-    #   return jsonify({"error": str(e)}), 500
 
 def gerar_roteiro(resumo, idade):
     prompt = (
-        f"Explique o seguinte tema de forma simples para uma criança de {idade} anos e sem analogias.\n"
+        f"Explique {resumo} de forma simples para uma pessoa  de {idade} anos e sem analogias.\n"
         f"Não repita informações já mencionadas e finalize a explicação de maneira natural, tente não cometer erros de português brasileiro.\n"
-        f"Resuma em no máximo 3 frases curtas e objetivas.\n"
-        f"Tema: {resumo}\n"
+        f"Resuma em no máximo 10 frases curtas e objetivas interligando os fatos e se possível dando exemplos.\n"
+        #"Tema: {resumo}\n"
         f"Resposta:"
     )
     return gerar_texto(prompt)
@@ -124,17 +112,28 @@ def gerar_texto(prompt):
     except subprocess.CalledProcessError as e:
         return f"Erro ao executar o modelo: {e}"
 
+
 def gerar_audio(roteiro, arquivo_saida):
+    print(f"Gerando áudio em: {arquivo_saida}")  # Debug
+    
+    # Garantir que o diretório existe
+    diretorio = os.path.dirname(arquivo_saida)
+    os.makedirs(diretorio, exist_ok=True)
+
+    # Se o arquivo já existir, removê-lo
     if os.path.exists(arquivo_saida):
-        os.remove(arquivo_saida)  # Remove qualquer áudio antigo antes de gerar um novo
+        os.remove(arquivo_saida)
+
+    # Gerar áudio
     tts = gTTS(roteiro, lang='pt-br')
     tts.save(arquivo_saida)
 
+    # Verificar se o arquivo foi criado
+    if not os.path.exists(arquivo_saida):
+        raise Exception(f"Erro: {arquivo_saida} não foi criado!")
+
+
 def buscar_imagens_unsplash(query, quantidade=3):
-    """
-    Busca imagens no Unsplash com base em uma consulta (query).
-    Retorna uma lista de URLs das imagens.
-    """
     url = f"https://api.unsplash.com/search/photos?query={query}&per_page={quantidade}"
     headers = {"Authorization": f"Client-ID {UNSPLASH_ACCESS_KEY}"}
     response = requests.get(url, headers=headers)
@@ -142,10 +141,17 @@ def buscar_imagens_unsplash(query, quantidade=3):
     if response.status_code == 200:
         dados = response.json()
         print(f"Dados retornados pela API: {dados}")  # Log dos dados
+        
+        if not dados["results"]:  # Verifica se a lista está vazia
+            print("Nenhuma imagem encontrada para a busca no Unsplash.")
+            return []  # Retorna lista vazia
+        
         urls_imagens = [imagem["urls"]["regular"] for imagem in dados["results"]]
         return urls_imagens
     else:
         raise Exception(f"Erro ao buscar imagens: {response.status_code}")
+
+
 
 def baixar_imagens(urls, pasta="imagens_temporarias"):
     """
@@ -193,16 +199,25 @@ def criar_video(audio_path, video_path, resumo):
         video = video.with_duration(audio.duration)
 
         # Salva o vídeo final no diretório de vídeos
-        #video_path_final = os.path.join(VIDEO_FINAL_DIR, "video_final.mp4")
         video_path_final = video_path  # Usa o nome dinâmico recebido
         video.write_videofile(video_path_final, fps=24, codec='libx264', audio_codec='aac', threads=4, preset='slow')
+        # fechamento explicito
+        video.close()
+        audio.close()
+
     finally:
         # Exclui as imagens temporárias após o uso
         for img in caminhos_imagens:
             if os.path.exists(img):
                 os.remove(img)
-        if os.path.exists(TEMP_DIR):
-            shutil.rmtree(TEMP_DIR)  # Remove o diretório temporário e seu conteúdo
+        for arquivo in os.listdir(TEMP_DIR):
+            caminho = os.path.join(TEMP_DIR, arquivo)
+        if os.path.isfile(caminho):
+            os.remove(caminho)
 
 if __name__ == '__main__':
-    app.run(host="aistudying.leo.com", port=5000, debug=True)
+    app.run(
+        host=os.getenv("SERVER_HOST"),  # Host do servidor
+        port=5000,  # Porta fixa (ou você pode adicionar ao .env se quiser)
+        debug=True
+        )

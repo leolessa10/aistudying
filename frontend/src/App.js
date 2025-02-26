@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "http://aistudying.leo.com:5000";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function App() {
   const [tema, setTema] = useState("");
@@ -78,8 +78,7 @@ function App() {
         <div style={{ marginTop: "20px" }}>
           <h3>Vídeo Gerado:</h3>
           <video width="80%" controls>
-	      #<source src={`${API_BASE_URL}${videoUrl}`} type="video/mp4" />
-	       <source src={`http://aistudying.leo.com:5000${videoUrl}`} type="video/mp4" />
+	      <source src={`${API_BASE_URL}${videoUrl}`} type="video/mp4" />
             Seu navegador não suporta vídeos.
           </video>
         </div>
