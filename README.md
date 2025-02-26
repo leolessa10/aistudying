@@ -38,8 +38,8 @@ npm install axios
 Create a `.env` file in the backend project directory and define the following environment variables:
 ```ini
 UNSPLASH_ACCESS_KEY= #Chave de API do Unsplash. Você precisa criar uma conta no Unsplash Developer.
-LLAMA_CLI_PATH= /caminho/para/llama-cli #Caminho para o arquivo do modelo Mistral usado pelo llama.cpp.
-MODEL_PATH= /caminho/para/mistral-7b-instruct.gguf #Diretório onde os vídeos finais gerados serão armazenados.
+LLAMA_CLI_PATH=/aistudying/modelos/llama.cpp/build/bin/llama-cli  #Caminho para o arquivo do modelo Mistral usado pelo llama.cpp.
+MODEL_PATH=/aistudying/modelos/mistral-7b-instruct-v0.1.Q4_K_M.gguf  #Diretório onde os vídeos finais gerados serão armazenados.
 VIDEO_FINAL_DIR= /repos/videofinal # Diret[orio ondeo arquivo finalserá gerado.
 TEMP_DIR= /tmp # Diretório onde os vídeos finais gerados serão armazenados. Deve ser um caminho acessível no sistema
 SERVER_HOST= server.com #Endereço do servidor onde a API do backend estará rodando. Pode ser um IP ou um domínio configurado.
