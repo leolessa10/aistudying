@@ -39,7 +39,7 @@ Create a `.env` file in the backend project directory and define the following e
 ```ini
 # Unsplash API key. You need to create an account on Unsplash Developer.
 UNSPLASH_ACCESS_KEY=
-# Path to the Mistral model file used by llama.cpp. Download on https://github.com/ggml-org/llama.cpp
+# Path to the Mistral model file used by llama.cpp. 
 LLAMA_CLI_PATH=/aistudying/modelos/llama.cpp/build/bin/llama-cli
 
 # Path to the Mistral model file (GGUF format). Download on https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF
